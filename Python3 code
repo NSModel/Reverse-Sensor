@@ -1,0 +1,61 @@
+mport time
+import RPi.GPIO as GPIO
+
+trigger_pin = 7
+echo_pin = 11
+buzzer_pin = 12
+led_pin = 37
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setwarnings(False)
+GPIO.setup(buzzer_pin, GPIO.OUT)
+GPIO.setup(led_pin,GPIO.OUT)
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(trigger_pin,GPIO.OUT)
+GPIO.setup(echo_pin,GPIO.IN)
+
+def send_trigger_pulse():
+    GPIO.output(trigger_pin,True)
+    time.sleep(0.0001)
+    GPIO.output(trigger_pin,False)
+
+def wait_for_echo(value,timeout):
+    count = timeout
+    while GPIO.input(echo_pin) != value and count>0:
+        count = count-1
+
+def get_distance():
+    send_trigger_pulse()
+    wait_for_echo(True,10000)
+    start = time.time()
+    wait_for_echo(False,10000)
+    finish = time.time()
+    pulse_len = finish-start
+    distance_cm = pulse_len/0.000058
+    return distance_cm
+'''
+def beep():
+     GPIO.output(PIN_NO, GPIO.HIGH)
+     time.sleep(1)
+     GPIO.output(PIN_NO, GPIO.LOW)
+'''
+try:
+        while True:
+            distance = get_distance()
+            print("cm = %f"%distance)
+            time.sleep(1)
+            
+            if distance <= 10:
+                print("Something is closing")
+                GPIO.output(buzzer_pin, GPIO.HIGH)
+                time.sleep(0.2)
+                GPIO.output(buzzer_pin, GPIO.LOW)
+                GPIO.output(led_pin, GPIO.HIGH)
+                time.sleep(0.1)
+                GPIO.output(led_pin, GPIO.LOW)
+            else :
+                print("everything is good.")
+                GPIO.output(buzzer_pin, GPIO.HIGH)
+                GPIO.output(led_pin,GPIO.LOW)
+except KeyboardInterupt:
+    GPIO.cleanup()
